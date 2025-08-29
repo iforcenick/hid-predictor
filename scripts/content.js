@@ -24,10 +24,13 @@ const detectResolution = () => {
   })
 }
 const detectViewport = () => {
-  const viewport = document.getElementById('stream-video')
+  let viewport = document.getElementById('stream-video')
+  if(!viewport || viewport.classList.contains('hidden')) {
+    viewport = document.getElementById('stream-canvas')
     if(!viewport) {
       return
     }
+  }
   chrome.runtime.sendMessage({
     message_type: 'setViewport',
     viewport: {
@@ -43,7 +46,14 @@ window.onload = async () => {
   const runtimeId = await chrome.runtime.sendMessage({ message_type: 'runtimeId' });
   setupRuntimeId(runtimeId);
 
-  document.getElementById('stream-video').addEventListener('mousedown', (e) => {
+  let viewport = document.getElementById('stream-video')
+  if(!viewport || viewport.classList.contains('hidden')) {
+    viewport = document.getElementById('stream-canvas')
+    if(!viewport) {
+      return
+    }
+  }
+  viewport.addEventListener('mousedown', (e) => {
     if(!isPickMode) {
       return
     }
