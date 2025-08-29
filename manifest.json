@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "KVM HID predictor",
+  "description": "KVM HID predictor",
+  "version": "1.0",
+  "action": {
+    "default_icon": "assets/images/icon.png"
+  },
+  "host_permissions": [
+    "https://*/*",
+    "https://*/"
+  ],
+  "permissions": [
+    "storage",
+    "tabs",
+    "webRequest",
+    "scripting",
+    "contextMenus"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/kvm/*"
+      ],
+      "js": [
+        "scripts/ws-patch.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://*/kvm/*"
+      ],
+      "js": [
+        "scripts/content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "externally_connectable": {
+    "matches": ["https://*/kvm/*"]
+  },
+  "background": {
+    "service_worker": "scripts/service-worker.js"
+  }
+}
