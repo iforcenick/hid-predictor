@@ -1,5 +1,9 @@
 const TRACKING_SPEED = 0.688
 
+let cursorPosition = { x: 0, y: 0 }
+let resolution = { width: 0, height: 0 }
+let viewport = { width: 0, height: 0 }
+
 function saveToLocalStorage(key, value) {
   return new Promise((resolve, reject) => {
     chrome.storage.local.set({[key]: value}, function() {
@@ -16,7 +20,7 @@ function getFromLocalStorage(key) {
     chrome.storage.local.get([key], function(data) {
       let value = null
       if(data?.[key] === undefined) {
-        value = {}
+        value = null
       } else {
         value = data[key];
       }
@@ -29,14 +33,13 @@ function getFromLocalStorage(key) {
 async function getPredictedPosition(data) {
   const numArr = data.split(',').map(Number)
   if(numArr[0] === 4) {
-    const cursorPosition = await getFromLocalStorage('cursorPosition') || {x: 0, y: 0}
-    const resolution = await getFromLocalStorage('resolution') || {width: 0, height: 0}
-    const viewport = await getFromLocalStorage('viewport') || {width: 0, height: 0}
     const squash = numArr[1] === 1
 
+    console.log(numArr)
+
     for(let i = 2; i < numArr.length; i += 2) {
-      cursorPosition.x += numArr[i] * TRACKING_SPEED
-      cursorPosition.y += numArr[i + 1] * TRACKING_SPEED
+      cursorPosition.x += TRACKING_SPEED * numArr[i]
+      cursorPosition.y += TRACKING_SPEED * numArr[i + 1]
 
       if(cursorPosition.x < 0) {
         cursorPosition.x = 0
@@ -52,7 +55,6 @@ async function getPredictedPosition(data) {
       }
     }
     if(resolution.width > 0 && resolution.height > 0 && viewport.width > 0 && viewport.height > 0) {
-      await saveToLocalStorage('cursorPosition', cursorPosition)
       return {
         x: cursorPosition.x / resolution.width * viewport.width,
         y: cursorPosition.y / resolution.height * viewport.height
@@ -64,8 +66,6 @@ async function getPredictedPosition(data) {
 }
 
 async function fixPosition() {
-  const cursorPosition = await getFromLocalStorage('cursorPosition')
-  const resolution = await getFromLocalStorage('resolution')
   if(resolution.width > 0 && resolution.height > 0) {
     return {
       x: cursorPosition.x / TRACKING_SPEED,
@@ -95,7 +95,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return false
   } else if(messageType === 'setInitialPosition') {
     if(viewport.width > 0 && viewport.height > 0 && resolution.width > 0 && resolution.height > 0) {
-      cursorPosition = {
+      const cursorPosition = {
         x: request.position.x / viewport.width * resolution.width,
         y: request.position.y / viewport.height * resolution.height
       }
@@ -129,3 +129,13 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     });
   }
 });
+
+(async () => {
+  cursorPosition = await getFromLocalStorage('cursorPosition') || { x: 0, y: 0 }
+  resolution = await getFromLocalStorage('resolution') || { width: 0, height: 0 }
+  viewport = await getFromLocalStorage('viewport') || { width: 0, height: 0 }
+
+  setInterval(() => {
+    saveToLocalStorage('cursorPosition', cursorPosition)
+  }, 500)
+})()

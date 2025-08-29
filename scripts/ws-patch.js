@@ -46,7 +46,6 @@ const _send = WebSocket.prototype.send;
 let mouseEventSocket = null
 WebSocket.prototype.send = function (data) {
   const _socket = this
-  _send.apply(this, arguments);
   if(runtimeId) {
     if(data instanceof Uint8Array || data instanceof Int8Array) {
       mouseEventSocket = _socket
@@ -64,6 +63,7 @@ WebSocket.prototype.send = function (data) {
       })
     }
   }
+  _send.apply(this, arguments);
 };
 
 async function moveByOffset(offset) {
